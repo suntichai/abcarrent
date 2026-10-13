@@ -27,11 +27,12 @@
 - `schema.sql` โครงสร้างฐานข้อมูล MySQL 8 สำหรับพัฒนาระบบเชื่อมต่อเซิร์ฟเวอร์
 - `supabase-config.js` Project URL และ Publishable key สำหรับเว็บ
 - `supabase/migrations/20261013000100_initial.sql` PostgreSQL schema, RLS, การกันเวลาจองรถชน และ bucket รูปรถ
+- `supabase/migrations/20261013000200_customer_quotes_and_documents.sql` เพิ่มข้อมูลใบกำกับภาษี ไฟล์ลูกค้า ใบเสนอราคา และค่าใช้จ่ายระบุรถ
 - `.github/workflows/deploy.yml` workflow เผยแพร่เว็บไซต์ไป GitHub Pages เมื่ออัปเดต branch `main`
 
 ## ตั้งค่า Supabase สำหรับเว็บออนไลน์
 
-1. เปิด Supabase project แล้วไปที่ **SQL Editor** คัดลอกและรันเนื้อหาใน `supabase/migrations/20261013000100_initial.sql`
+1. เปิด Supabase project แล้วไปที่ **SQL Editor** รัน `supabase/migrations/20261013000100_initial.sql` ก่อน จากนั้นรัน `supabase/migrations/20261013000200_customer_quotes_and_documents.sql`
 2. ไปที่ **Authentication → Users** แล้วเพิ่มผู้ใช้แอดมินด้วยอีเมลและรหัสผ่าน
 3. กลับไป **SQL Editor** รันคำสั่งด้านล่าง โดยแทนอีเมลตัวอย่างด้วยอีเมลแอดมินที่สร้างไว้:
 
@@ -65,3 +66,8 @@ GitHub Pages จะเผยแพร่ `index.html`, `styles.css`, `app.js` �
 ## หมายเหตุการใช้งาน
 
 โหมด Supabase ใช้ข้อมูลออนไลน์ร่วมกันและมีสิทธิ์แอดมินพื้นฐาน แต่ยังควรทดสอบนโยบาย RLS และสำรองข้อมูลก่อนใช้กับข้อมูลส่วนบุคคลจริง ระบบยังไม่ใช่ระบบบัญชีภาษีหรือใบกำกับภาษีอย่างเป็นทางการ
+
+
+## Update for customer tax data, documents, and quotations
+
+For an existing project, run `supabase/migrations/20261013000200_customer_quotes_and_documents.sql` in Supabase SQL Editor after the initial migration. It adds customer tax invoice fields, a private PDF bucket for identity and driving license files, per-car expense references, quote records, print timestamps, and a database rule that prevents paid bookings from being changed back to unpaid. Deploy the updated `index.html`, `styles.css`, `app.js`, and `supabase` folder to GitHub Pages. Address dropdowns load Thai province, district, and subdistrict data from the [thai-province-data repository](https://github.com/kongvut/thai-province-data).
