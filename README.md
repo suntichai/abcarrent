@@ -23,16 +23,17 @@
 
 - `index.html` หน้าระบบ
 - `styles.css` รูปแบบหน้าจอและการปรับขนาดสำหรับมือถือ
+- `documents.css` รูปแบบใบเสร็จ ใบกำกับภาษี ใบเสนอราคา และรายชื่อลูกค้าขนาด A4
 - `app.js` การทำงานและข้อมูลตัวอย่าง
 - `schema.sql` โครงสร้างฐานข้อมูล MySQL 8 สำหรับพัฒนาระบบเชื่อมต่อเซิร์ฟเวอร์
 - `supabase-config.js` Project URL และ Publishable key สำหรับเว็บ
 - `supabase/migrations/20261013000100_initial.sql` PostgreSQL schema, RLS, การกันเวลาจองรถชน และ bucket รูปรถ
 - `supabase/migrations/20261013000200_customer_quotes_and_documents.sql` เพิ่มข้อมูลใบกำกับภาษี ไฟล์ลูกค้า ใบเสนอราคา และค่าใช้จ่ายระบุรถ
-- `.github/workflows/deploy.yml` workflow เผยแพร่เว็บไซต์ไป GitHub Pages เมื่ออัปเดต branch `main`
+- `supabase/migrations/20261014000100_company_banks_customer_phone.sql` เพิ่มข้อมูลบริษัท บัญชีธนาคาร ยอดรับชำระแยกบัญชี และใช้เบอร์โทรศัพท์เป็นรหัสลูกค้า
 
 ## ตั้งค่า Supabase สำหรับเว็บออนไลน์
 
-1. เปิด Supabase project แล้วไปที่ **SQL Editor** รัน `supabase/migrations/20261013000100_initial.sql` ก่อน จากนั้นรัน `supabase/migrations/20261013000200_customer_quotes_and_documents.sql`
+1. เปิด Supabase project แล้วไปที่ **SQL Editor** รัน migration ตามลำดับ: `20261013000100_initial.sql`, `20261013000200_customer_quotes_and_documents.sql`, และ `20261014000100_company_banks_customer_phone.sql`
 2. ไปที่ **Authentication → Users** แล้วเพิ่มผู้ใช้แอดมินด้วยอีเมลและรหัสผ่าน
 3. กลับไป **SQL Editor** รันคำสั่งด้านล่าง โดยแทนอีเมลตัวอย่างด้วยอีเมลแอดมินที่สร้างไว้:
 
@@ -55,13 +56,13 @@
 ## นำขึ้น GitHub และเปิดออนไลน์
 
 1. สร้าง repository บน GitHub โดยเลือก `Public` หากต้องการใช้ Pages กับแผนฟรี
-2. นำ **ไฟล์ทั้งหมดในโฟลเดอร์นี้** เข้า repository ที่ branch `main` โดยคงตำแหน่งไฟล์เดิม รวมถึง `.github/workflows/deploy.yml`
-3. ใน repository เปิด **Settings → Pages** แล้วตั้ง **Build and deployment → Source** เป็น **GitHub Actions**
-4. เมื่อ workflow `Deploy AB CARRENT to GitHub Pages` ทำงานสำเร็จ เปิด URL ที่แสดงใน **Settings → Pages** หรือในหน้า workflow run
+2. นำไฟล์เว็บไซต์เข้า repository ที่ branch `main` โดยคงตำแหน่งไฟล์เดิม
+3. ใน repository เปิด **Settings → Pages** แล้วตั้ง **Build and deployment → Source** เป็น **Deploy from a branch** เลือก branch `main` และโฟลเดอร์ `/(root)` จากนั้นกด **Save**
+4. เปิด URL ที่แสดงใน **Settings → Pages** เมื่อ GitHub เผยแพร่เว็บไซต์เสร็จ
 
-หลังจากนั้น การ push การแก้ไขเข้า `main` จะเผยแพร่เว็บไซต์ให้อัตโนมัติ หาก repository ใช้ branch หลักชื่ออื่น ให้แก้ชื่อ branch ใน `.github/workflows/deploy.yml` ให้ตรงก่อน
+หลังจากนั้น การ push การแก้ไขเข้า `main` จะเผยแพร่เว็บไซต์ให้อัตโนมัติ หากเลือกใช้ GitHub Actions แทนการเผยแพร่จาก branch ต้องเพิ่ม workflow สำหรับ GitHub Pages ใน `.github/workflows/` และตั้ง Source เป็น **GitHub Actions**
 
-GitHub Pages จะเผยแพร่ `index.html`, `styles.css`, `app.js` และ `supabase-config.js` ส่วน `README.md`, SQL migration และ workflow จะไม่ถูกใส่ไว้ในเว็บไซต์ที่เปิดสาธารณะ
+GitHub Pages จะเผยแพร่ `index.html`, `styles.css`, `documents.css`, `app.js` และ `supabase-config.js` ส่วน `README.md`, SQL migration และ workflow จะไม่ถูกใส่ไว้ในเว็บไซต์ที่เปิดสาธารณะ
 
 ## หมายเหตุการใช้งาน
 
@@ -71,3 +72,5 @@ GitHub Pages จะเผยแพร่ `index.html`, `styles.css`, `app.js` �
 ## Update for customer tax data, documents, and quotations
 
 For an existing project, run `supabase/migrations/20261013000200_customer_quotes_and_documents.sql` in Supabase SQL Editor after the initial migration. It adds customer tax invoice fields, a private PDF bucket for identity and driving license files, per-car expense references, quote records, print timestamps, and a database rule that prevents paid bookings from being changed back to unpaid. Deploy the updated `index.html`, `styles.css`, `app.js`, and `supabase` folder to GitHub Pages. Address dropdowns load Thai province, district, and subdistrict data from the [thai-province-data repository](https://github.com/kongvut/thai-province-data).
+
+Run `supabase/migrations/20261014000100_company_banks_customer_phone.sql` after the prior migrations. It makes the normalized phone number the customer ID, creates company and bank account settings, and links each booking payment to a receiving account. The app prints A4 receipts, quotations, and invoices using the saved company profile. A VAT invoice is enabled only when the company profile is marked VAT-registered; confirm the business details and tax treatment with the Revenue Department or an accountant before issuing official documents. Deploy `documents.css` with the other website files.
