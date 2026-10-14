@@ -80,3 +80,8 @@ For an existing project, run `supabase/migrations/20261013000200_customer_quotes
 Run `supabase/migrations/20261014000100_company_banks_customer_phone.sql` after the prior migrations. It makes the normalized phone number the customer ID, creates company and bank account settings, and links each booking payment to a receiving account. The app prints A4 receipts, quotations, and invoices using the saved company profile. A VAT invoice is enabled only when the company profile is marked VAT-registered; confirm the business details and tax treatment with the Revenue Department or an accountant before issuing official documents. Deploy `documents.css` with the other website files.
 
 Run `supabase/migrations/20261014040000_document_numbers_payments_notifications.sql` after those migrations. It adds Buddhist-year document counters, booking payment history, and admin notifications.
+
+
+## Source code organization
+
+The application remains a single-page site. Feature code is maintained in `src/app/` modules, while the root `app.js` is the generated browser bundle used by `index.html` and GitHub Pages. After editing a source module, run `node scripts/build-app.js` to regenerate `app.js`. The build script uses only Node.js built-in modules.
