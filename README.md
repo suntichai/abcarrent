@@ -30,10 +30,11 @@
 - `supabase/migrations/20261013000100_initial.sql` PostgreSQL schema, RLS, การกันเวลาจองรถชน และ bucket รูปรถ
 - `supabase/migrations/20261013000200_customer_quotes_and_documents.sql` เพิ่มข้อมูลใบกำกับภาษี ไฟล์ลูกค้า ใบเสนอราคา และค่าใช้จ่ายระบุรถ
 - `supabase/migrations/20261014000100_company_banks_customer_phone.sql` เพิ่มข้อมูลบริษัท บัญชีธนาคาร ยอดรับชำระแยกบัญชี และใช้เบอร์โทรศัพท์เป็นรหัสลูกค้า
+- `supabase/migrations/20261014040000_document_numbers_payments_notifications.sql` เพิ่มเลขรันเอกสาร การรับชำระหลายครั้ง และการแจ้งเตือนสำหรับแอดมิน
 
 ## ตั้งค่า Supabase สำหรับเว็บออนไลน์
 
-1. เปิด Supabase project แล้วไปที่ **SQL Editor** รัน migration ตามลำดับ: `20261013000100_initial.sql`, `20261013000200_customer_quotes_and_documents.sql`, และ `20261014000100_company_banks_customer_phone.sql`
+1. เปิด Supabase project แล้วไปที่ **SQL Editor** รัน migration ตามลำดับ: `20261013000100_initial.sql`, `20261013000200_customer_quotes_and_documents.sql`, `20261014000100_company_banks_customer_phone.sql`, และ `20261014040000_document_numbers_payments_notifications.sql`
 2. ไปที่ **Authentication → Users** แล้วเพิ่มผู้ใช้แอดมินด้วยอีเมลและรหัสผ่าน
 3. กลับไป **SQL Editor** รันคำสั่งด้านล่าง โดยแทนอีเมลตัวอย่างด้วยอีเมลแอดมินที่สร้างไว้:
 
@@ -74,3 +75,5 @@ GitHub Pages จะเผยแพร่ `index.html`, `styles.css`, `documents.
 For an existing project, run `supabase/migrations/20261013000200_customer_quotes_and_documents.sql` in Supabase SQL Editor after the initial migration. It adds customer tax invoice fields, a private PDF bucket for identity and driving license files, per-car expense references, quote records, print timestamps, and a database rule that prevents paid bookings from being changed back to unpaid. Deploy the updated `index.html`, `styles.css`, `app.js`, and `supabase` folder to GitHub Pages. Address dropdowns load Thai province, district, and subdistrict data from the [thai-province-data repository](https://github.com/kongvut/thai-province-data).
 
 Run `supabase/migrations/20261014000100_company_banks_customer_phone.sql` after the prior migrations. It makes the normalized phone number the customer ID, creates company and bank account settings, and links each booking payment to a receiving account. The app prints A4 receipts, quotations, and invoices using the saved company profile. A VAT invoice is enabled only when the company profile is marked VAT-registered; confirm the business details and tax treatment with the Revenue Department or an accountant before issuing official documents. Deploy `documents.css` with the other website files.
+
+Run `supabase/migrations/20261014040000_document_numbers_payments_notifications.sql` after those migrations. It adds Buddhist-year document counters, booking payment history, and admin notifications.
