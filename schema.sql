@@ -23,6 +23,7 @@ CREATE TABLE cars (
   seats TINYINT UNSIGNED NOT NULL DEFAULT 5,
   transmission ENUM('automatic','manual') NOT NULL DEFAULT 'automatic',
   fuel_type VARCHAR(30) NOT NULL DEFAULT 'gasoline',
+  engine_cc SMALLINT UNSIGNED NULL,
   color VARCHAR(40),
   daily_rate DECIMAL(10,2) NOT NULL,
   active BOOLEAN NOT NULL DEFAULT TRUE,

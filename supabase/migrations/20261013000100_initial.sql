@@ -17,6 +17,7 @@ create table if not exists public.cars (
   seats smallint not null default 5 check (seats > 0),
   transmission text not null default 'อัตโนมัติ',
   fuel text not null default 'เบนซิน',
+  engine_cc integer check (engine_cc is null or engine_cc > 0),
   daily_rate numeric(10,2) not null check (daily_rate >= 0),
   color text,
   available boolean not null default true,
