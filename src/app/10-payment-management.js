@@ -13,8 +13,57 @@ const hintUpdate=()=>{const prior=paymentRows().filter(p=>p.bookingId===bookingI
 modal.querySelector('.cancel-modal').onclick=closeModal;
 method.onchange=()=>{account.disabled=closed||method.value!=='โอนเงิน';account.required=method.value==='โอนเงิน';if(method.value!=='โอนเงิน')account.value=''};method.onchange();amount.oninput=hintUpdate;
 modal.querySelectorAll('[data-payment-edit]').forEach(btn=>btn.onclick=()=>{const p=paymentRows().find(x=>x.id===btn.dataset.paymentEdit);if(!p)return;editingId=p.id;method.value=p.method||'เงินสด';method.onchange();account.value=p.bankAccountId||'';f.elements.paidAt.value=dateValue(p.paidAt);amount.value=Number(p.amount).toFixed(2);f.elements.note.value=p.note||'';modal.querySelector('#save-payment').textContent='บันทึกการแก้ไข';hintUpdate()});
-const removePayment=async(id)=>{const payment=paymentRows().find(p=>p.id===id&&p.bookingId===bookingId);if(!payment)return toast('ไม่พบรายการรับชำระนี้');const confirmBox=openModal('ยืนยันลบรายการรับชำระ',booking.id,`<p>ลบรายการรับชำระวันที่ ${dateLabel(payment.paidAt)} จำนวน ${money(payment.amount)} หรือไม่</p><div class="form-actions"><button type="button" class="secondary-button cancel-modal">กลับ</button><button type="button" class="primary-button danger-button" id="confirm-payment-delete">ยืนยันลบ</button></div>`);if(!confirmBox)return;confirmBox.querySelector('.cancel-modal').onclick=()=>paymentForm(bookingId);const deleteButton=confirmBox.querySelector('#confirm-payment-delete');deleteButton.onclick=async()=>{deleteButton.disabled=true;const removedId=payment.id;let removedLocally=false;try{if(onlineMode){const {data,error}=await supabaseClient.from('booking_payments').delete().eq('id',removedId).select('id,booking_id');if(error)throw error;if(!data?.some(row=>row.id===removedId))throw new Error('ลบไม่ได้: ไม่พบรายการ หรือบัญชีนี้ไม่มีสิทธิ์ลบ')}db.payments=paymentRows().filter(p=>p.id!==removedId);removedLocally=true;const received=paymentRows().filter(p=>p.bookingId===bookingId).reduce((n,p)=>n+Number(p.amount||0),0);booking.paid=received>=Number(booking.total);if(onlineMode&&syncedState){syncedState.payments=(syncedState.payments||[]).filter(p=>p.id!==removedId);const {data,error}=await supabaseClient.from('bookings').update({paid:booking.paid}).eq('id',bookingId).select('id');if(error)throw error;if(!data?.some(row=>row.id===bookingId))throw new Error('ลบรายการแล้ว แต่ไม่สามารถปรับสถานะชำระเงินของบิลได้');const savedBooking=syncedState.bookings.find(b=>b.id===bookingId);if(savedBooking)savedBooking.paid=booking.paid;render()}else await persist();toast('ลบรายการรับชำระแล้ว');paymentForm(bookingId)}catch(error){if(removedLocally){render();toast(`ลบรายการแล้ว แต่ปรับสถานะบิลไม่สำเร็จ: ${error.message||'กรุณาตรวจสอบอีกครั้ง'}`);paymentForm(bookingId)}else{closeModal();toast(error.message||'ลบรายการรับชำระไม่สำเร็จ');paymentForm(bookingId)}}}};
+const removePayment=async(id)=>{const payment=paymentRows().find(p=>p.id===id&&p.bookingId===bookingId);if(!payment)return toast('ไม่พบรายการรับชำระนี้');const confirmBox=openModal('ยืนยันลบรายการรับชำระ',booking.id,`<p>ลบรายการรับชำระวันที่ ${dateLabel(payment.paidAt)} จำนวน ${money(payment.amount)} หรือไม่</p><div class="form-actions"><button type="button" class="secondary-button cancel-modal">กลับ</button><button type="button" class="primary-button danger-button" id="confirm-payment-delete">ยืนยันลบ</button></div>`);if(!confirmBox)return;confirmBox.querySelector('.cancel-modal').onclick=()=>paymentForm(bookingId);const deleteButton=confirmBox.querySelector('#confirm-payment-delete');deleteButton.onclick=async()=>{deleteButton.disabled=true;const removedId=payment.id;let removedLocally=false;try{if(onlineMode){const {data,error}=await supabaseClient.from('booking_payments').delete().eq('id',removedId).select('id,booking_id');if(error)throw error;if(!data?.some(row=>row.id===removedId))throw new Error('ลบไม่ได้: ไม่พบรายการ หรือบัญชีนี้ไม่มีสิทธิ์ลบ')}db.payments=paymentRows().filter(p=>p.id!==removedId);removedLocally=true;const received=paymentRows().filter(p=>p.bookingId===bookingId).reduce((n,p)=>n+Number(p.amount||0),0);booking.paid=booking.paid||received>=Number(booking.total);if(onlineMode&&syncedState){syncedState.payments=(syncedState.payments||[]).filter(p=>p.id!==removedId);const {data,error}=await supabaseClient.from('bookings').update({paid:booking.paid}).eq('id',bookingId).select('id');if(error)throw error;if(!data?.some(row=>row.id===bookingId))throw new Error('ลบรายการแล้ว แต่ไม่สามารถปรับสถานะชำระเงินของบิลได้');const savedBooking=syncedState.bookings.find(b=>b.id===bookingId);if(savedBooking)savedBooking.paid=booking.paid;render()}else await persist();toast('ลบรายการรับชำระแล้ว');paymentForm(bookingId)}catch(error){if(removedLocally){render();toast(`ลบรายการแล้ว แต่ปรับสถานะบิลไม่สำเร็จ: ${error.message||'กรุณาตรวจสอบอีกครั้ง'}`);paymentForm(bookingId)}else{closeModal();toast(error.message||'ลบรายการรับชำระไม่สำเร็จ');paymentForm(bookingId)}}}};
 modal.querySelectorAll('[data-payment-delete]').forEach(btn=>btn.onclick=()=>removePayment(btn.dataset.paymentDelete));
-f.onsubmit=async e=>{e.preventDefault();const d=Object.fromEntries(new FormData(f)),value=Number(d.amount);if(!(value>0))return toast('กรอกยอดเงินให้มากกว่า 0');if(d.method==='โอนเงิน'&&!d.bankAccountId)return toast('เลือกบัญชีรับโอน');const p=editingId?paymentRows().find(x=>x.id===editingId):{id:crypto.randomUUID(),bookingId,createdAt:new Date().toISOString()};if(!p)return toast('ไม่พบรายการรับชำระ');Object.assign(p,{amount:value,method:d.method,bankAccountId:d.bankAccountId||'',paidAt:new Date(d.paidAt+'T00:00:00').toISOString(),note:d.note||''});try{if(!editingId&&onlineMode){const {error}=await supabaseClient.rpc('record_booking_payment',{p_payment_id:p.id,p_booking_id:bookingId,p_amount:value,p_payment_method:p.method,p_bank_account_id:p.bankAccountId||null,p_paid_at:p.paidAt,p_note:p.note||null});if(error)throw error}if(!editingId)paymentRows().push(p);const total=paymentRows().filter(x=>x.bookingId===bookingId).reduce((n,x)=>n+Number(x.amount||0),0);booking.paid=total>=Number(booking.total);await persist();toast(editingId?'แก้ไขรายการรับชำระแล้ว':'บันทึกรับชำระเงินแล้ว');editingId='';paymentForm(bookingId)}catch(error){toast(error.message||'บันทึกรายการรับชำระไม่สำเร็จ')}};
+f.onsubmit=async e=>{
+ e.preventDefault();
+ const saveButton=modal.querySelector('#save-payment');
+ if(saveButton.disabled)return;
+ const d=Object.fromEntries(new FormData(f)),value=Number(d.amount);
+ if(!(value>0))return toast('กรอกยอดเงินให้มากกว่า 0');
+ if(d.method==='โอนเงิน'&&!d.bankAccountId)return toast('เลือกบัญชีรับโอน');
+ const payment={id:editingId||crypto.randomUUID(),bookingId,amount:value,method:d.method,bankAccountId:d.bankAccountId||'',paidAt:new Date(d.paidAt+'T00:00:00').toISOString(),note:d.note||''};
+ saveButton.disabled=true;
+ try{
+  if(onlineMode){
+   if(editingId){
+    const {data,error}=await supabaseClient.from('booking_payments').update({amount:payment.amount,payment_method:payment.method,bank_account_id:payment.bankAccountId||null,paid_at:payment.paidAt,note:payment.note||null}).eq('id',editingId).eq('booking_id',bookingId).select('id');
+    if(error)throw error;
+    if(!data?.some(row=>row.id===editingId))throw new Error('รายการรับชำระไม่ถูกบันทึก กรุณาตรวจสอบสิทธิ์แล้วลองอีกครั้ง');
+   }else{
+    const {error}=await supabaseClient.rpc('record_booking_payment',{p_payment_id:payment.id,p_booking_id:bookingId,p_amount:payment.amount,p_payment_method:payment.method,p_bank_account_id:payment.bankAccountId||null,p_paid_at:payment.paidAt,p_note:payment.note||null});
+    if(error)throw error;
+   }
+   const {data,error}=await supabaseClient.from('booking_payments').select('*').eq('booking_id',bookingId).order('paid_at',{ascending:true});
+   if(error)throw error;
+   const freshRows=(data||[]).map(paymentFromDb);
+   db.payments=[...paymentRows().filter(row=>row.bookingId!==bookingId),...freshRows];
+   const total=freshRows.reduce((n,row)=>n+Number(row.amount||0),0);
+   const paid=booking.paid||total>=Number(booking.total);
+   const {data:savedBooking,error:bookingError}=await supabaseClient.from('bookings').update({paid}).eq('id',bookingId).select('id');
+   if(bookingError)throw bookingError;
+   if(!savedBooking?.some(row=>row.id===bookingId))throw new Error('โหลดรายการแล้ว แต่ปรับสถานะชำระเงินไม่สำเร็จ');
+   booking.paid=paid;
+   if(syncedState){
+    syncedState.payments=[...(syncedState.payments||[]).filter(row=>row.bookingId!==bookingId),...freshRows.map(row=>({...row}))];
+    const baseline=syncedState.bookings?.find(row=>row.id===bookingId);if(baseline)baseline.paid=paid;
+   }
+   render();
+  }else{
+   const old=editingId?paymentRows().find(row=>row.id===editingId):null;
+   if(editingId&&!old)throw new Error('ไม่พบรายการรับชำระ');
+   if(old)Object.assign(old,payment);else paymentRows().push(payment);
+   booking.paid=booking.paid||paymentRows().filter(row=>row.bookingId===bookingId).reduce((n,row)=>n+Number(row.amount||0),0)>=Number(booking.total);
+   await persist();
+  }
+  toast(editingId?'แก้ไขรายการรับชำระแล้ว':'บันทึกรับชำระเงินแล้ว');
+  editingId='';
+  paymentForm(bookingId);
+ }catch(error){
+  toast(error.message||'บันทึกรายการรับชำระไม่สำเร็จ');
+ }finally{
+  if(saveButton.isConnected)saveButton.disabled=false;
+ }
+};
 };
 bookingActions=function(id){const b=db.bookings.find(x=>x.id===id);if(!b)return;const editable=b.status!=='cancelled'&&new Date(b.start).setHours(0,0,0,0)>new Date().setHours(0,0,0,0),m=openModal(`รายการ ${b.id}`,`${customer(b.customerId)?.name||''} · ${car(b.carId)?.name||''}`,`<div class="receipt-info"><div><span>รับรถ</span><br>${dtFmt(b.start)}</div><div><span>คืนรถ</span><br>${dtFmt(b.end)}</div><div><span>ยอดรวม</span><br><b>${money(b.total)}</b></div><div><span>สถานะ</span><br>${statusLabel[b.status]||b.status}</div></div><div class="form-actions booking-actions"><button type="button" class="secondary-button" id="manage-payments">จัดการการชำระเงิน</button>${editable?'<button type="button" class="secondary-button" id="edit-booking-btn">แก้ไขรายการ</button>':''}${b.status==='cancelled'?'<span class="status status-cancelled">ยกเลิกแล้ว · แก้ไขไม่ได้</span>':'<button type="button" class="secondary-button danger-button" id="cancel-booking-btn">ยกเลิกรายการ</button>'}<button type="button" class="secondary-button cancel-modal">ปิด</button></div>`);if(!m)return;m.querySelector('.cancel-modal').onclick=closeModal;m.querySelector('#manage-payments').onclick=()=>paymentForm(id);if(editable)m.querySelector('#edit-booking-btn').onclick=()=>bookingForm(id);const cancel=m.querySelector('#cancel-booking-btn');if(cancel)cancel.onclick=()=>{const confirmModal=openModal('ยืนยันยกเลิกรายการ',`รายการ ${b.id}`,`<div class="cancel-warning"><p>เมื่อยกเลิกแล้วจะไม่สามารถแก้ไขรายการนี้ได้</p><p>ระบบจะไม่นำรายการนี้ไปตรวจสอบรถซ้ำในช่วงวันเวลาเดียวกัน</p></div><div class="form-actions"><button type="button" class="secondary-button cancel-modal">กลับ</button><button type="button" class="primary-button danger-button" id="confirm-cancel-booking">ยืนยันยกเลิกรายการ</button></div>`);if(!confirmModal)return;confirmModal.querySelector('.cancel-modal').onclick=()=>bookingActions(id);confirmModal.querySelector('#confirm-cancel-booking').onclick=async()=>{b.status='cancelled';await persist();toast('ยกเลิกรายการแล้ว รถคันนี้เปิดให้จองในช่วงเวลาดังกล่าว');closeModal();show('bookings')}}};
