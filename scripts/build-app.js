@@ -15,6 +15,7 @@ const modules = [
   '09-table-sorting-and-pagination.js',
   '10-payment-management.js',
   '10a-quote-workflows.js',
+  '10b-rental-list-updates.js',
   '11-startup.js',
 ];
 const source = modules.map((name) => fs.readFileSync(path.join(root, 'src', 'app', name), 'utf8').trim()).join('\n\n');
